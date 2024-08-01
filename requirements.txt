@@ -2,3 +2,6 @@ langchain
 langchain-core
 langchain-community
 langchain-google-genai
+PyGithub
+Selenium
+Streamlit
