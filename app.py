@@ -3,8 +3,6 @@ from tool import *
 from tool import agent_executor
 from github import GithubException
 import time, base64
-from pathlib import Path
-
 
 st.set_page_config(page_title="GitGather", layout="centered", initial_sidebar_state="collapsed", page_icon=":book:")
 # st._config.set_option(f'theme.backgroundColor' ,"white" )
@@ -51,15 +49,18 @@ with c1:
     st.title("GitGather 📚")
     st.write("A guiding tool that helps lecturers upload study materials to a GitHub repo, providing a clear path for students to follow.")
     with st.container(border=True):
-        col1, col2 = st.columns((0.8, 0.1))
-    with col1:
-        task = st.radio("Choose option", ["List Departments", "Upload Materials", "Create Departments"], horizontal=True, index=None)
+        # col1, col2 = st.columns((0.8, 0.1))
+        task = st.radio("Choose option", ["List Departments", "Create Departments", "Upload Materials"], horizontal=True, index=None)
 
         if task == "List Departments":
-            result_list = agent_executor.invoke({"input": "List the repositories in AIMIT-IT."})
+            result_list = agent_executor.invoke({"input": "List the repositories in AIMIT-IT. Output only what is returned."})
             with st.expander("View Departments"):
                 departments = result_list["output"]
-                st.markdown(f":blue[{departments}]")
+                if departments == "No repositories":
+                    st.write("No departments found in the organization account AIMIT-IT")
+                else:
+                    st.markdown(f"* {departments.split(', ')}")
+                    
         
         if task=="Create Departments":
             dept_name = st.text_input("Enter the name of the department")
@@ -67,7 +68,7 @@ with c1:
 
             if submit_button:
                 try:
-                    result = agent_executor.invoke({"input": f"Create a new repository called {dept_name} in AIMIT-IT organization."})
+                    result = agent_executor.invoke({"input": f"Create a new repository called {dept_name} in AIMIT-IT organization. Output only what is returned"})
                     if result['output'] == "Task Completed":
                         st.success("Department Created Successfully!")
                 except GithubException as e:
@@ -91,8 +92,9 @@ with c1:
             else:
                 department = ", ".join([r.name for r in repos])
 
-            selected_repo = st.selectbox("Choose Department", [department], index=None)
+            selected_repo = st.selectbox("Choose Department", department.split(", "), index=None)
             uploaded_file = st.file_uploader("Upload file", type=['pdf', 'ppt', 'docx', 'jpg', 'jpeg', 'png'])
+            upload_button = st.button("Upload", type="secondary")
             
             if uploaded_file is not None:
 
@@ -109,6 +111,7 @@ with c1:
                     st.error(file_upload["output"])
 
 
+    st.link_button("Go to Github", url="https://github.com/AIMIT-IT", type="primary", use_container_width=True)
         
 
 
