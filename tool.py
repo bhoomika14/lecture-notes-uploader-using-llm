@@ -1,13 +1,12 @@
 import os
-import time
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
 import json
-from github import Github, Auth
+from github import Github
 from langchain.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.agents import AgentExecutor,  create_tool_calling_agent, initialize_agent, AgentType, create_react_agent
+from langchain.agents import AgentExecutor,  create_tool_calling_agent
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 with open('config.json') as f:
@@ -22,16 +21,16 @@ git_hub = Github(login_or_token=os.environ["GITHUB_ACCESS_TOKEN"])
 org_name = git_hub.get_organization("AIMIT-IT")
 
 
-@tool
-def get_repo_name(org: str):
-    """This function is used to list the repositories in github organization."""
-    org_name = git_hub.get_organization(org)
-    repos = org_name.get_repos()
-    if repos.totalCount==0:
-        return "No Repositories"
-    else:
-        repositories = [r.name for r in repos]
-        return repositories
+# @tool
+# def get_repo_name(org: str):
+#     """This function is used to list the repositories in github organization."""
+#     org_name = git_hub.get_organization(org)
+#     repos = org_name.get_repos()
+#     if repos.totalCount==0:
+#         return "No Repositories"
+#     else:
+#         repositories = ", ".join([r.name for r in repos])
+#         return repositories
 
 @tool
 def create_repos(org: str, name: str):
@@ -91,13 +90,14 @@ Begin!
 
 prompt = ChatPromptTemplate.from_messages([
     ("system", template),
+    MessagesPlaceholder("chat_history", optional=True),
     ("human", "{input}"),
     MessagesPlaceholder("agent_scratchpad"),
 ])
 
 
-agent = create_tool_calling_agent(llm, [get_repo_name, upload_to_repo, create_repos], prompt)
-agent_executor = AgentExecutor(agent=agent, tools=[get_repo_name, upload_to_repo, create_repos], verbose=True, return_intermediate_steps=True)
+agent = create_tool_calling_agent(llm, [upload_to_repo, create_repos], prompt)
+agent_executor = AgentExecutor(agent=agent, tools=[upload_to_repo, create_repos], verbose=True, return_intermediate_steps=True)
 
 #agent_executor.invoke({"input": f"Upload the file in I-MSc-DataScience repository. The file name is OCI_GenAI_Professional_Certificate.pdf'"})
 
