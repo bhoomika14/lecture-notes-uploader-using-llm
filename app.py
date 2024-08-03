@@ -53,13 +53,15 @@ with c1:
         task = st.radio("Choose option", ["List Departments", "Create Departments", "Upload Materials"], horizontal=True, index=None)
 
         if task == "List Departments":
-            result_list = agent_executor.invoke({"input": "List the repositories in AIMIT-IT. Output only what is returned."})
-            with st.expander("View Departments"):
-                departments = result_list["output"]
-                if departments == "No repositories":
-                    st.write("No departments found in the organization account AIMIT-IT")
-                else:
-                    st.markdown(f"* {departments.split(', ')}")
+            org_name = git_hub.get_organization("AIMIT-IT")
+            repos = org_name.get_repos()
+
+            if repos.totalCount==0:
+                st.write("No departments found in the organization account AIMIT-IT")
+            else:
+                department = [r.name for r in repos]
+                with st.expander("View Departments"):
+                    st.markdown("\n".join([f"* {dept}" for dept in department]))
                     
         
         if task=="Create Departments":
@@ -96,7 +98,7 @@ with c1:
             uploaded_file = st.file_uploader("Upload file", type=['pdf', 'ppt', 'docx', 'jpg', 'jpeg', 'png'])
             upload_button = st.button("Upload", type="secondary")
             
-            if uploaded_file is not None:
+            if upload_button:
 
                 file_path = os.path.join(os.getcwd(), uploaded_file.name)
                 with open(file_path, "wb") as f:
